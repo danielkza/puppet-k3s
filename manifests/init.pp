@@ -17,11 +17,11 @@ class k3s (
   String $binary_path,
   Boolean $download_images = true,
 ) {
-  include k3s::prerequisites
-  include k3s::install
-
   $config_path = "${config_dir}/config.yaml"
   $config_yaml_dir = "${config_dir}/config.yaml.d"
+
+  include k3s::prerequisites
+  include k3s::install
 
   Class['k3s::prerequisites'] -> Class['k3s::install']
 }
