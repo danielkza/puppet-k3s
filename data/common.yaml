@@ -1,5 +1,5 @@
 ---
-k3s::ensure: 'present'
-k3s::installation_mode: 'script'
-k3s::binary_version: 'v1.19.4+k3s1'
-k3s::binary_path: '/usr/bin/k3s'
+k3s::binary_version: 'v1.28.4+k3s2'
+k3s::binary_path: '/usr/local/bin/k3s'
+k3s::config_dir: '/etc/rancher/k3s'
+k3s::state_dir: '/var/lib/rancher/k3s'

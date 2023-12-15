@@ -1,0 +1,3 @@
+k3s::prerequisites::packages:
+  - curl
+  - ca-certificates

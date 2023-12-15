@@ -13,3 +13,7 @@ Install K3s using the official script or downloading the official binary.
 **Features**
 
 Fix error on metadata requirements.
+
+## Release 1.2.0
+
+Forked

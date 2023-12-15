@@ -11,19 +11,17 @@
 #     binary_path       => '/home/john-doe/bin/k3s',
 #   }
 class k3s (
-  Enum['present', 'absent'] $ensure,
-  Enum['script', 'binary'] $installation_mode,
+  String $config_dir,
+  String $state_dir,
   String $binary_version,
   String $binary_path,
+  Boolean $download_images = true,
 ) {
-  if $installation_mode == 'binary' and (!$binary_path or !$binary_version) {
-    fail('The vars $binary_version and $binary_path must be set when using the \
-      binary installation mode.')
-  }
+  include k3s::prerequisites
+  include k3s::install
 
-  if $ensure == 'present' {
-    include k3s::install
-  } else {
-    include k3s::uninstall
-  }
+  $config_path = "${config_dir}/config.yaml"
+  $config_yaml_dir = "${config_dir}/config.yaml.d"
+
+  Class['k3s::prerequisites'] -> Class['k3s::install']
 }
