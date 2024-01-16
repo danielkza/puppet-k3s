@@ -1,30 +1,38 @@
-class k3s::firewall::firewalld () {
+class rke2::firewall::firewalld () {
   include 'firewalld'
 
-  firewalld_zone { 'k3s-plane':
-    ensure           => present,
-    target           => '%%REJECT%%',
-    sources          => [
-      $k3s_plane_cidr_v4,
-      $k3s_plane_cidr_v6,
-    ],
+  $node_ip_iface = $rke2::node_ip_iface ? {
+    "auto"  => $facts['networking']['primary'],
+    "none"  => undef,
+    default => $rke2::node_ip_iface,
   }
 
-  firewalld_zone { 'k3s-cluster':
+  $sources = [
+    $rke2::plane_cidr_v4,
+    $rke2::plane_cidr_v6,
+  ].filter |$v| { !empty($v) }
+
+  firewalld_zone { 'rke2-plane':
+    ensure  => present,
+    target  => 'default',
+    sources => $sources,
+  }
+
+  firewalld_zone { 'rke2-cluster':
     ensure     => present,
-    target     => '%%ACCEPT%%',
-    interfaces => $plane_ifaces,
+    target     => 'ACCEPT',
+    interfaces => $rke2::firewall::plane_ifaces,
   }
 
-  firewalld_custom_service { 'k3s':
-    short       => 'k3s',
-    description => 'k3s',
-    ports       => $plane_ports,
+  firewalld_custom_service { 'rke2':
+    short       => 'rke2',
+    description => 'rke2',
+    ports       => $rke2::firewall::plane_ports,
   }
 
-  firewalld_service { 'k3s-plane-k3s':
+  firewalld_service { 'rke2-plane-rke2':
     ensure  => 'present',
-    service => 'k3s',
-    zone    => 'k3s-plane',
+    service => 'rke2',
+    zone    => 'rke2-plane',
   }
 }

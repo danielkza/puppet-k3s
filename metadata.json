@@ -1,60 +1,40 @@
 {
-  "name": "danielkza-k3s",
-  "version": "1.2.0",
+  "name": "danielkza-rke2",
+  "version": "0.1.0",
   "author": "Daniel Miranda",
-  "summary": "Install k3s, an open-source lightweight kubernetes.",
+  "summary": "Install rke2 Rancher kuberntes distribution",
   "license": "Apache-2.0",
-  "source": "https://github.com/danielkza/puppet-k3s",
-  "project_page": "https://github.com/danielkza/puppet-k3s",
-  "issues_url": "https://github.com/danielkza/puppet-k3s/issues",
+  "source": "https://github.com/danielkza/puppet-rke2",
+  "project_page": "https://github.com/danielkza/puppet-rke2",
+  "issues_url": "https://github.com/danielkza/puppet-rke2/issues",
   "dependencies": [
     {
       "name": "puppet/archive",
       "version_requirement": ">= 4.6.0"
+    },
+    {
+      "name": "puppet/systemd",
+      "version_requirement": ">= 6.3.0"
     }
   ],
   "operatingsystem_support": [
     {
-      "operatingsystem": "CentOS",
-      "operatingsystemrelease": [
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "OracleLinux",
-      "operatingsystemrelease": [
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "RedHat",
-      "operatingsystemrelease": [
-        "8"
-      ]
-    },
-    {
-      "operatingsystem": "Scientific",
-      "operatingsystemrelease": [
-        "7"
-      ]
-    },
-    {
       "operatingsystem": "Debian",
       "operatingsystemrelease": [
-        "9"
+        "12"
       ]
     },
     {
-      "operatingsystem": "Ubuntu",
+      "operatingsystem": "Fedora",
       "operatingsystemrelease": [
-        "18.04"
+        "38", "39"
       ]
     }
   ],
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">= 4.10.0"
+      "version_requirement": ">= 7.0.0"
     }
   ],
   "pdk-version": "1.18.1",

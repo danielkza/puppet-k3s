@@ -1,0 +1,3 @@
+<% if $facts[os][selinux][enabled] { -%>
+selinux: true
+<% } -%>

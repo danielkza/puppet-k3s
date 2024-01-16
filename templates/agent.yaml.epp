@@ -1,0 +1,2 @@
+<%= epp("rke2/common.yaml.epp") -%>
+token: "<%= unwrap($rke2::token) %>"

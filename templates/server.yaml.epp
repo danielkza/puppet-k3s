@@ -1,0 +1,4 @@
+<%= epp("rke2/common.yaml.epp") -%>
+token: "<%= unwrap($rke2::token) %>"
+cluster-cidr: "<%= [$rke2::cluster_cidr_v4, $rke2::cluster_cidr_v6].filter |$v| { !empty($v) }.join(',') %>"
+service-cidr: "<%= [$rke2::service_cidr_v4, $rke2::service_cidr_v6].filter |$v| { !empty($v) }.join(',') %>"

@@ -1,22 +1,15 @@
-# @summary Class responsible for installing k3s
-class k3s::install {
-  include k3s::prerequisites
+class rke2::install {
+  include rke2
+  include rke2::prerequisites
 
   case $facts['os']['architecture'] {
     'amd64', 'x86_64': {
-      $binary_arch = 'k3s'
       $image_arch = 'amd64'
       $checksum_arch = 'sha256sum-amd64.txt'
     }
     'arm64', 'aarch64': {
-      $binary_arch = 'k3s-arm64'
-      $image_arch = 'arm64'
+      $image_arch = 'r'
       $checksum_arch = 'sha256sum-arm64.txt'
-    }
-    'armhf': {
-      $binary_arch = 'k3s-armhf'
-      $image_arch = 'armhf'
-      $checksum_arch = 'sha256sum-arm.txt'
     }
     default: {
       fail('No valid architecture provided.')
@@ -24,13 +17,14 @@ class k3s::install {
   }
 
   # uriescape from stdlib is deprecated, do a weird hack
-  $binary_version_esc = regsubst($k3s::binary_version, '\+', '%2B')
+  $binary_version_esc = regsubst($rke2::binary_version, '\+', '%2B')
 
-  $k3s_base_url = "https://github.com/k3s-io/k3s/releases/download/${binary_version_esc}"
-  $k3s_binary_url = "${k3s_base_url}/${binary_arch}"
-  $k3s_checksum_url = "${k3s_base_url}/${checksum_arch}"
+  $rke2_base_url = "https://github.com/rancher/rke2/releases/download/${binary_version_esc}"
+  $rke2_bin_name = "rke2.linux-${image_arch}"
+  $rke2_binary_url = "${rke2_base_url}/${rke2_bin_name}"
+  $rke2_checksum_url = "${rke2_base_url}/${checksum_arch}"
 
-  $cache_dir = "/var/cache/puppet-k3s/${k3s::binary_version}"
+  $cache_dir = "/var/cache/puppet-rke2/${rke2::binary_version}"
   file { [dirname($cache_dir), $cache_dir]:
     ensure  => directory,
     mode    => '0755',
@@ -43,39 +37,39 @@ class k3s::install {
     mode    => '0644',
     owner   => 'root',
     group   => 'root',
-    source  => $k3s_checksum_url,
+    source  => $rke2_checksum_url,
   }
 
-  archive { 'k3s-binary':
+  archive { 'rke2-binary':
     ensure           => present,
-    path             => "${cache_dir}/${binary_arch}",
-    source           => $k3s_binary_url,
+    path             => "${cache_dir}/${rke2_bin_name}",
+    source           => $rke2_binary_url,
     cleanup          => false,
     download_options => '-S',
     user             => "root",
     group            => "root",
 
-    notify => Exec['k3s-verify-checksums'],
+    notify => Exec['rke2-verify-checksums'],
   }
 
-  exec { 'k3s-verify-checksums':
+  exec { 'rke2-verify-checksums':
     command => ['sha256sum', '-c', '--ignore-missing', $checksum_arch],
     path    => '/usr/bin:/bin',
     cwd     => $cache_dir,
   }
 
-  file { $k3s::binary_path:
+  file { $rke2::binary_path:
     ensure  => file,
-    source  => "${cache_dir}/${binary_arch}",
+    source  => "${cache_dir}/${rke2_bin_name}",
     mode    => '0755',
     owner   => 'root',
     group   => 'root',
     require => [
-      Exec['k3s-verify-checksums'],
+      Exec['rke2-verify-checksums'],
     ],
   }
 
-  $state_dir_parent = dirname($k3s::state_dir)
+  $state_dir_parent = dirname($rke2::state_dir)
   if dirname($state_dir_parent) != '/' {
     ensure_resource('file', $state_dir_parent, {
       ensure => directory,
@@ -84,19 +78,15 @@ class k3s::install {
       group  => 'root',
     })
   }
-  file { [$k3s::state_dir, "${k3s::state_dir}/agent"]:
+  file { [$rke2::state_dir, "${rke2::state_dir}/agent"]:
     ensure => directory,
     owner  => "root",
     group  => "root",
     mode   => "0750",
   }
 
-  if $k3s::download_images {
-    $k3s_images_url = "${k3s_base_url}/k3s-airgap-images-${image_arch}.tar.zst"
-    $image_dl_file = "${cache_dir}/${basename($k3s_images_url)}"
-
-    $image_dir = "${k3s::state_dir}/agent/images"
-    $image_file = "${image_dir}/${basename($k3s_images_url)}"
+  if $rke2::download_images {
+    $image_dir = "${rke2::state_dir}/agent/images"
 
     file { $image_dir:
       ensure => directory,
@@ -105,42 +95,49 @@ class k3s::install {
       mode   => "0750",
     }
 
-    archive { 'k3s-images':
-      ensure           => present,
-      path             => $image_dl_file,
-      source           => $k3s_images_url,
-      cleanup          => false,
-      download_options => '-S',
-      user             => "root",
-      group            => "root",
+    $image_components = ['core', $rke2::cni]
+    $image_components.each |$component| {
+      $rke2_images_url = "${rke2_base_url}/rke2-images-${component}.linux-${image_arch}.tar.zst"
+      $image_dl_file = "${cache_dir}/${rke2::binary_version}/${basename($rke2_images_url)}"
 
-      notify => Exec['k3s-verify-checksums'],
-    }
+      archive { "rke2-images-${component}":
+        ensure           => present,
+        path             => $image_dl_file,
+        source           => $rke2_images_url,
+        cleanup          => false,
+        download_options => '-S',
+        user             => "root",
+        group            => "root",
 
-    file { $image_file:
-      ensure  => file,
-      source  => $image_dl_file,
-      mode    => '0644',
-      owner   => 'root',
-      group   => 'root',
-      require => [
-        Exec['k3s-verify-checksums'],
-      ],
+        notify => Exec['rke2-verify-checksums'],
+      }
+
+      $image_file = "${image_dir}/${basename($rke2_images_url)}"
+      file { $image_file:
+        ensure  => file,
+        source  => $image_dl_file,
+        mode    => '0644',
+        owner   => 'root',
+        group   => 'root',
+        require => [
+          Exec['rke2-verify-checksums'],
+        ],
+      }
     }
   }
 
-  file { '/etc/default/k3s':
+  file { '/etc/default/rke2':
     ensure => file,
     mode   => '0640',
     owner  => 'root',
     group  => 'root',
     content => inline_template(@(EOF)
-K3S_CONFIG_FILE="<%= scope['k3s::config_path'] %>"
+RKE2_CONFIG_FILE="<%= scope['rke2::config_path'] %>"
 EOF
     ),
   }
 
-  $config_parent = dirname($k3s::config_dir)
+  $config_parent = dirname($rke2::config_dir)
   if dirname($config_parent) != '/' {
     ensure_resource('file', $config_parent, {
       ensure => directory,
@@ -150,14 +147,14 @@ EOF
     })
   }
 
-  file { $k3s::config_dir:
+  file { $rke2::config_dir:
     ensure => directory,
     mode   => '0750',
     owner  => 'root',
     group  => 'root',
   }
 
-  file { $k3s::config_yaml_dir:
+  file { $rke2::config_yaml_dir:
     ensure => directory,
     mode   => '0750',
     owner  => 'root',

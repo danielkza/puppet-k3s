@@ -1,12 +1,13 @@
-class k3s::firewall::ufw () {
+class rke2::firewall::ufw () {
   include 'ufw'
 
-  $k3s::firewall::plane_ports.each |$entry| {
+  $rke2::firewall::plane_ports.each |$entry| {
     $port = $entry['port']
     $proto = $entry['protocol']
 
-    [$k3s::plane_cidr_v4, $k3s::plane_cidr_v6].each |$cidr| {
-      ufw_rule { "k3s-port-${port}-${proto}":
+    $cidrs = delete_undef_values([$rke2::plane_cidr_v4, $rke2::plane_cidr_v6])
+    $cidrs.each |$cidr| {
+      ufw_rule { "rke2-port-${port}-${proto}":
         action       => 'allow',
         to_ports_app => $port,
         proto        => $proto,
@@ -15,8 +16,9 @@ class k3s::firewall::ufw () {
     }
   }
 
-  $k3s::firewall::plane_ifaces.each |$iface| {
-    ufw_rule { "k3s-vxlan-iface-${iface}":
+  $rke2::firewall::plane_ifaces.each |$iface| {
+    $iface_title = regsubst($iface, '[^[:alnum:]\-_\.]', '_', 'G')
+    ufw_rule { "rke2-vxlan-iface-${iface_title}":
       action => 'allow',
       interface => $iface,
     }

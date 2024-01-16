@@ -1,5 +1,37 @@
 ---
-k3s::binary_version: 'v1.28.4+k3s2'
-k3s::binary_path: '/usr/local/bin/k3s'
-k3s::config_dir: '/etc/rancher/k3s'
-k3s::state_dir: '/var/lib/rancher/k3s'
+rke2::binary_version: 'v1.29.0+rke2r1'
+rke2::binary_path: '/usr/local/bin/rke2'
+rke2::config_dir: '/etc/rancher/rke2'
+rke2::state_dir: '/var/lib/rancher/rke2'
+rke2::cni: 'canal'
+rke2::plane_cidr_v4: "10.0.0.0/8"
+rke2::plane_cidr_v6: null
+rke2::vxlan_id: 1
+rke2::download_images: true
+
+rke2::firewall::provider: null
+rke2::firewall::enabled: false
+
+rke2::node_name: '%{facts.networking.fqdn}'
+rke2::configure::purge: true
+
+rke2::cluster_cidr_v4: 10.42.0.0/16
+rke2::service_cidr_v4: 10.43.0.0/16
+rke2::cluster_cidr_v6: 2001:cafe:42::/56
+rke2::service_cidr_v6: 2001:cafe:43::/112
+rke2::node_ip_iface: auto
+
+rke2::server::no_workloads: false
+rke2::node_taints: {}
+rke2::node_labels: {}
+
+rke2::registries::mirrors: {}
+rke2::registries::configs: {}
+
+lookup_options:
+  "^rke2::(token|agent_token)$":
+    convert_to: Sensitive
+  "^rke2::registries::(mirrors|configs)$":
+    merge: hash
+  "^rke2::(server|agent)::(taints|labels)$":
+    merge: hash
